@@ -1,0 +1,286 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Global Safety Net: Default Deny All ---
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Hardened Global Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Bootstrapped administrator check: requires verified Google token email or explicit administrators doc
+    function isAdmin() {
+      return isSignedIn() && (
+        ('email' in request.auth.token &&
+         request.auth.token.email == 'johnlsacc23332@gmail.com' &&
+         request.auth.token.email_verified == true) ||
+        exists(/databases/$(database)/documents/administrators/$(request.auth.uid))
+      );
+    }
+
+    // --- Validators ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'country', 'role', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['id', 'uid', 'displayName', 'email', 'country', 'role', 'photoURL', 'bio', 'createdAt', 'updatedAt']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() <= 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 100 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.country is string && data.country.size() <= 80 &&
+             data.role in ['member', 'admin'] &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 500));
+    }
+
+    function isValidConversation(data) {
+      return data.keys().hasAll(['userId', 'userName', 'userEmail', 'unreadForAdmin', 'unreadForUser', 'archived', 'blocked', 'createdAt', 'updatedAt']) &&
+             data.keys().hasOnly(['id', 'userId', 'userName', 'userEmail', 'userCountry', 'userPhotoURL', 'subject', 'lastMessage', 'lastSenderId', 'lastSenderName', 'unreadForAdmin', 'unreadForUser', 'archived', 'blocked', 'createdAt', 'updatedAt']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() <= 128 &&
+             data.userName is string && data.userName.size() <= 100 &&
+             data.userEmail is string && data.userEmail.size() <= 120 &&
+             data.unreadForAdmin is number && data.unreadForAdmin >= 0 &&
+             data.unreadForUser is number && data.unreadForUser >= 0 &&
+             data.archived is bool &&
+             data.blocked is bool &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             data.updatedAt is string && data.updatedAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('userCountry' in data) || (data.userCountry is string && data.userCountry.size() <= 80)) &&
+             (!('userPhotoURL' in data) || (data.userPhotoURL is string && data.userPhotoURL.size() <= 1000)) &&
+             (!('subject' in data) || (data.subject is string && data.subject.size() <= 150)) &&
+             (!('lastMessage' in data) || (data.lastMessage is string && data.lastMessage.size() <= 1000)) &&
+             (!('lastSenderId' in data) || (data.lastSenderId is string && data.lastSenderId.size() <= 128)) &&
+             (!('lastSenderName' in data) || (data.lastSenderName is string && data.lastSenderName.size() <= 100));
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['conversationId', 'senderId', 'senderName', 'senderRole', 'text', 'read', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'conversationId', 'senderId', 'senderName', 'senderRole', 'text', 'attachmentUrl', 'attachmentName', 'attachmentType', 'read', 'createdAt']) &&
+             data.conversationId is string && data.conversationId.size() > 0 && data.conversationId.size() <= 128 &&
+             data.senderId is string && data.senderId.size() > 0 && data.senderId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() <= 100 &&
+             data.senderRole in ['member', 'admin'] &&
+             data.text is string && data.text.size() <= 3000 &&
+             data.read is bool &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('attachmentUrl' in data) || (data.attachmentUrl is string && data.attachmentUrl.size() <= 800000)) &&
+             (!('attachmentName' in data) || (data.attachmentName is string && data.attachmentName.size() <= 200)) &&
+             (!('attachmentType' in data) || (data.attachmentType is string && data.attachmentType.size() <= 50));
+    }
+
+    function isValidVolunteerApp(data) {
+      return data.keys().hasAll(['fullName', 'email', 'country', 'programmeInterest', 'skills', 'motivation', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'userId', 'fullName', 'email', 'country', 'phone', 'programmeInterest', 'skills', 'availability', 'motivation', 'status', 'createdAt']) &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() <= 100 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.country is string && data.country.size() <= 80 &&
+             data.programmeInterest is string && data.programmeInterest.size() <= 100 &&
+             data.skills is string && data.skills.size() <= 500 &&
+             data.motivation is string && data.motivation.size() <= 2000 &&
+             data.status in ['pending', 'reviewed', 'accepted', 'archived'] &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 40)) &&
+             (!('availability' in data) || (data.availability is string && data.availability.size() <= 100));
+    }
+
+    function isValidPartnership(data) {
+      return data.keys().hasAll(['organizationName', 'contactPerson', 'email', 'country', 'partnershipType', 'proposal', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'organizationName', 'contactPerson', 'email', 'country', 'partnershipType', 'proposal', 'status', 'createdAt']) &&
+             data.organizationName is string && data.organizationName.size() > 0 && data.organizationName.size() <= 150 &&
+             data.contactPerson is string && data.contactPerson.size() <= 100 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.country is string && data.country.size() <= 80 &&
+             data.partnershipType is string && data.partnershipType.size() <= 80 &&
+             data.proposal is string && data.proposal.size() <= 3000 &&
+             data.status in ['pending', 'reviewed', 'contacted'] &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128));
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll(['name', 'email', 'subject', 'message', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'name', 'email', 'country', 'subject', 'message', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.subject is string && data.subject.size() <= 150 &&
+             data.message is string && data.message.size() <= 3000 &&
+             data.status in ['unread', 'replied', 'archived'] &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('country' in data) || (data.country is string && data.country.size() <= 80));
+    }
+
+    function isValidProgramme(data) {
+      return data.keys().hasAll(['title', 'slug', 'category', 'summary', 'active', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'title', 'slug', 'category', 'summary', 'description', 'beneficiaries', 'regions', 'imageUrl', 'active', 'createdAt', 'updatedAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 150 &&
+             data.slug is string && data.slug.size() <= 100 &&
+             data.category is string && data.category.size() <= 80 &&
+             data.summary is string && data.summary.size() <= 500 &&
+             data.active is bool &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 5000)) &&
+             (!('beneficiaries' in data) || (data.beneficiaries is string && data.beneficiaries.size() <= 100)) &&
+             (!('regions' in data) || (data.regions is string && data.regions.size() <= 200)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1000)) &&
+             (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidAnnouncement(data) {
+      return data.keys().hasAll(['title', 'content', 'category', 'published', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'title', 'content', 'category', 'published', 'authorName', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.content is string && data.content.size() <= 6000 &&
+             data.category is string && data.category.size() <= 80 &&
+             data.published is bool &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('id' in data) || (data.id is string && data.id.size() <= 128)) &&
+             (!('authorName' in data) || (data.authorName is string && data.authorName.size() <= 100));
+    }
+
+    // --- Collections ---
+
+    // 1. Users
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUser(incoming()) &&
+                   incoming().uid == userId &&
+                   (incoming().role == 'member' || isAdmin());
+      allow update: if isValidId(userId) && isValidUser(incoming()) && (
+        isAdmin() ||
+        (isOwner(userId) &&
+         incoming().role == existing().role &&
+         incoming().uid == existing().uid &&
+         incoming().createdAt == existing().createdAt &&
+         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'country', 'bio', 'photoURL', 'updatedAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 2. Administrators
+    match /administrators/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 3. Conversations
+    match /conversations/{conversationId} {
+      allow get: if isValidId(conversationId) && (
+        isAdmin() ||
+        (isSignedIn() && (conversationId == 'conv-' + request.auth.uid || (resource != null && resource.data.userId == request.auth.uid)))
+      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(conversationId) && isValidConversation(incoming()) &&
+                   (isAdmin() || (isSignedIn() && incoming().userId == request.auth.uid && incoming().blocked == false));
+      allow update: if isValidId(conversationId) && isValidConversation(incoming()) && (
+        isAdmin() ||
+        (isSignedIn() &&
+         existing().userId == request.auth.uid &&
+         incoming().userId == existing().userId &&
+         incoming().createdAt == existing().createdAt &&
+         incoming().blocked == existing().blocked &&
+         incoming().diff(existing()).affectedKeys().hasOnly([
+           'lastMessage', 'lastSenderId', 'lastSenderName', 'unreadForAdmin', 'unreadForUser',
+           'updatedAt', 'userName', 'userCountry', 'userPhotoURL', 'subject'
+         ]))
+      );
+      allow delete: if isAdmin();
+
+      // Subcollection: Messages
+      match /messages/{messageId} {
+        allow get: if isValidId(messageId) && (
+          isAdmin() ||
+          (isSignedIn() && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid)
+        );
+        allow list: if isAdmin() ||
+          (isSignedIn() && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid);
+        allow create: if isValidId(messageId) && isValidMessage(incoming()) &&
+          isSignedIn() &&
+          incoming().senderId == request.auth.uid &&
+          incoming().conversationId == conversationId && (
+            (isAdmin() && incoming().senderRole == 'admin') ||
+            (incoming().senderRole == 'member' &&
+             get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid &&
+             get(/databases/$(database)/documents/conversations/$(conversationId)).data.blocked == false)
+          );
+        allow update: if isValidId(messageId) && isValidMessage(incoming()) && (
+          isAdmin() ||
+          (isSignedIn() &&
+           get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid &&
+           incoming().diff(existing()).affectedKeys().hasOnly(['read']))
+        );
+        allow delete: if isAdmin();
+      }
+    }
+
+    // 4. Volunteer Applications
+    match /volunteer_applications/{applicationId} {
+      allow get: if isValidId(applicationId) && (isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(applicationId) && isValidVolunteerApp(incoming()) &&
+                   incoming().status == 'pending' &&
+                   (!('userId' in incoming()) || incoming().userId == 'anonymous-applicant' || (isSignedIn() && incoming().userId == request.auth.uid));
+      allow update: if isValidId(applicationId) && isValidVolunteerApp(incoming()) && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 5. Partnership Requests
+    match /partnership_requests/{requestId} {
+      allow get: if isValidId(requestId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(requestId) && isValidPartnership(incoming()) && incoming().status == 'pending';
+      allow update: if isValidId(requestId) && isValidPartnership(incoming()) && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 6. Contact Enquiries
+    match /contact_enquiries/{enquiryId} {
+      allow get: if isValidId(enquiryId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(enquiryId) && isValidContact(incoming()) && incoming().status == 'unread';
+      allow update: if isValidId(enquiryId) && isValidContact(incoming()) && isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 7. Programmes (Public Read, Admin Write)
+    match /programmes/{programmeId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(programmeId) && isValidProgramme(incoming()) && isAdmin();
+      allow delete: if isValidId(programmeId) && isAdmin();
+    }
+
+    // 8. Announcements (Public Read, Admin Write)
+    match /announcements/{announcementId} {
+      allow get, list: if true;
+      allow create, update: if isValidId(announcementId) && isValidAnnouncement(incoming()) && isAdmin();
+      allow delete: if isValidId(announcementId) && isAdmin();
+    }
+  }
+}

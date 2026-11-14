@@ -1,0 +1,6 @@
+{
+  "name": "Asia Humanitarian Development NGO",
+  "description": "Premier Asia-focused international NGO dedicated to humanitarian development, education, healthcare, environmental protection, community empowerment, and secure member communication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

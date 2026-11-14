@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --color-navy: #142B45;
+  --color-navy-dark: #0D1C2E;
+  --color-navy-light: #1E3E63;
+  --color-gold: #C9A45C;
+  --color-gold-light: #E0C17E;
+  --color-gold-dark: #A9833B;
+  --color-cream: #F8F6F0;
+  --color-forest: #26734D;
+  --color-forest-dark: #1A5437;
+  --color-slate-soft: #F2F4F6;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream);
+  color: var(--color-navy);
+}
+
+/* Asian geometric subtle pattern backdrop */
+.bg-asian-pattern {
+  background-image: radial-gradient(rgba(201, 164, 92, 0.12) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.bg-asian-lattice {
+  background-image: 
+    linear-gradient(45deg, rgba(20, 43, 69, 0.03) 25%, transparent 25%), 
+    linear-gradient(-45deg, rgba(20, 43, 69, 0.03) 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, rgba(20, 43, 69, 0.03) 75%), 
+    linear-gradient(-45deg, transparent 75%, rgba(20, 43, 69, 0.03) 75%);
+  background-size: 20px 20px;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(20, 43, 69, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(20, 43, 69, 0.3);
+}

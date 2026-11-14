@@ -1,0 +1,203 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered member profile information",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "uid": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "country": { "type": "string", "maxLength": 80 },
+        "bio": { "type": "string", "maxLength": 500 },
+        "photoURL": { "type": "string", "maxLength": 1000 },
+        "role": { "type": "string", "enum": ["member", "admin"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "displayName", "email", "country", "role", "createdAt", "updatedAt"]
+    },
+    "Administrator": {
+      "title": "Administrator",
+      "description": "Authorized administrator identity and permissions",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Private one-on-one communication channel between member/visitor and NGO administration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userName": { "type": "string", "maxLength": 100 },
+        "userEmail": { "type": "string", "maxLength": 120 },
+        "userCountry": { "type": "string", "maxLength": 80 },
+        "userPhotoURL": { "type": "string", "maxLength": 1000 },
+        "subject": { "type": "string", "maxLength": 150 },
+        "lastMessage": { "type": "string", "maxLength": 1000 },
+        "lastSenderId": { "type": "string", "maxLength": 128 },
+        "lastSenderName": { "type": "string", "maxLength": 100 },
+        "unreadForAdmin": { "type": "number" },
+        "unreadForUser": { "type": "number" },
+        "archived": { "type": "boolean" },
+        "blocked": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "userName", "userEmail", "unreadForAdmin", "unreadForUser", "archived", "blocked", "createdAt", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual message inside a private conversation",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "conversationId": { "type": "string", "maxLength": 128 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderRole": { "type": "string", "enum": ["member", "admin"] },
+        "text": { "type": "string", "maxLength": 3000 },
+        "attachmentUrl": { "type": "string", "maxLength": 800000 },
+        "attachmentName": { "type": "string", "maxLength": 200 },
+        "attachmentType": { "type": "string", "maxLength": 50 },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["conversationId", "senderId", "senderName", "senderRole", "text", "read", "createdAt"]
+    },
+    "VolunteerApplication": {
+      "title": "VolunteerApplication",
+      "description": "Humanitarian volunteer application submitted by an individual",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "country": { "type": "string", "maxLength": 80 },
+        "phone": { "type": "string", "maxLength": 40 },
+        "programmeInterest": { "type": "string", "maxLength": 100 },
+        "skills": { "type": "string", "maxLength": 500 },
+        "availability": { "type": "string", "maxLength": 100 },
+        "motivation": { "type": "string", "maxLength": 2000 },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "accepted", "archived"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["fullName", "email", "country", "programmeInterest", "skills", "motivation", "status", "createdAt"]
+    },
+    "PartnershipRequest": {
+      "title": "PartnershipRequest",
+      "description": "Partnership or institutional cooperation request",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "organizationName": { "type": "string", "maxLength": 150 },
+        "contactPerson": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "country": { "type": "string", "maxLength": 80 },
+        "partnershipType": { "type": "string", "maxLength": 80 },
+        "proposal": { "type": "string", "maxLength": 3000 },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "contacted"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["organizationName", "contactPerson", "email", "country", "partnershipType", "proposal", "status", "createdAt"]
+    },
+    "ContactEnquiry": {
+      "title": "ContactEnquiry",
+      "description": "General enquiry or question submitted through the public contact form",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 120 },
+        "country": { "type": "string", "maxLength": 80 },
+        "subject": { "type": "string", "maxLength": 150 },
+        "message": { "type": "string", "maxLength": 3000 },
+        "status": { "type": "string", "enum": ["unread", "replied", "archived"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "email", "subject", "message", "status", "createdAt"]
+    },
+    "Programme": {
+      "title": "Programme",
+      "description": "Humanitarian programme managed by the NGO",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "slug": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 80 },
+        "summary": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 5000 },
+        "beneficiaries": { "type": "string", "maxLength": 100 },
+        "regions": { "type": "string", "maxLength": 200 },
+        "imageUrl": { "type": "string", "maxLength": 1000 },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "slug", "category", "summary", "active", "createdAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Official NGO news, field reports and emergency notices",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 200 },
+        "content": { "type": "string", "maxLength": 6000 },
+        "category": { "type": "string", "maxLength": 80 },
+        "published": { "type": "boolean" },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "content", "category", "published", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User member profiles"
+    },
+    "/administrators/{adminId}": {
+      "schema": "Administrator",
+      "description": "Authorized administrators list"
+    },
+    "/conversations/{conversationId}": {
+      "schema": "Conversation",
+      "description": "Private messaging conversations between user and administration"
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Individual messages in a private conversation"
+    },
+    "/volunteer_applications/{applicationId}": {
+      "schema": "VolunteerApplication",
+      "description": "Humanitarian volunteer applications"
+    },
+    "/partnership_requests/{requestId}": {
+      "schema": "PartnershipRequest",
+      "description": "Partnership enquiries and proposals"
+    },
+    "/contact_enquiries/{enquiryId}": {
+      "schema": "ContactEnquiry",
+      "description": "Public website contact inquiries"
+    },
+    "/programmes/{programmeId}": {
+      "schema": "Programme",
+      "description": "Humanitarian development programmes"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Published announcements, reports and news"
+    }
+  }
+}
